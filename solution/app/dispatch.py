@@ -146,7 +146,7 @@ def _greedy_schedule(loads, rates, battery):
             )
             schedule.append(step)
             soc += step * billing.STEP_H * battery["charge_efficiency"]
-        elif kw >= threshold and soc > battery["soc_min_kwh"]:
+        elif (kw > threshold or kw == threshold) and soc > battery["soc_min_kwh"]:
             step = min(battery["max_discharge_kw"], (soc - battery["soc_min_kwh"]) / billing.STEP_H)
             schedule.append(-step)
             soc -= step * billing.STEP_H

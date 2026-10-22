@@ -29,8 +29,8 @@ REVERT = {
     ],
     "difficulty_2": [
         (
-            "    bounds = _infer_bounds(months, data, bills_by_month)  # htbfix:bounds",
-            '    bounds = parse_bounds(price_list["default_boundaries"])  # htbfix:bounds',
+            "    bounds, weekend_flat = _infer_bounds(months, data, bills_by_month)  # htbfix:bounds",
+            '    bounds, weekend_flat = parse_bounds(price_list["default_boundaries"]), True  # htbfix:bounds',
         ),
     ],
     "difficulty_3": [

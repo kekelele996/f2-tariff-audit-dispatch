@@ -31,7 +31,9 @@ def format_bound(minutes):
     return f"{minutes // 60:02d}:{minutes % 60:02d}"
 
 
-def period_of(minute, bounds):
+def period_of(minute, bounds, flat=False):
+    if flat:
+        return "flat"
     index = 0
     for bound in bounds:
         if minute >= bound:
@@ -39,11 +41,15 @@ def period_of(minute, bounds):
     return SHAPE[index]
 
 
-def period_energy(minutes, loads, bounds):
-    """按区间起点把电量归入时段，返回各时段精确电量（kWh）。"""
+def period_energy(minutes, loads, bounds, weekend=None, weekend_flat=False):
+    """按区间起点把电量归入时段，返回各时段精确电量（kWh）。
+
+    weekend 是与区间对齐的布尔序列；weekend_flat 为真时这些区间整段计入平段。
+    """
     out = {name: 0.0 for name in PERIODS}
-    for minute, kw in zip(minutes, loads):
-        out[period_of(minute, bounds)] += kw * STEP_H
+    for index, (minute, kw) in enumerate(zip(minutes, loads)):
+        flat = bool(weekend_flat and weekend is not None and weekend[index])
+        out[period_of(minute, bounds, flat)] += kw * STEP_H
     return out
 
 
@@ -71,8 +77,10 @@ def basic_charge(contract_kw, measured_kw, rate, floor_kw):
     return r2(billed * rate + 2.0 * rate * excess), billed
 
 
-def month_bill(month, minutes, loads, cols, tariff):
-    energy = period_energy(minutes, loads, tariff["bounds"])
+def month_bill(month, minutes, loads, cols, tariff, weekend=None):
+    energy = period_energy(
+        minutes, loads, tariff["bounds"], weekend, bool(tariff.get("weekend_flat"))
+    )
     energy_charge = r2(sum(r2(energy[name] * tariff["rates"][name]) for name in PERIODS))
     measured = measure_demand(cols, tariff["demand_mode"])
     basic, billed = basic_charge(
@@ -92,7 +100,7 @@ def month_bill(month, minutes, loads, cols, tariff):
 def read_interval(path):
     """读取 interval.csv，按 ts 的 YYYY-MM 分组。
 
-    返回 {"feeders": [...], "months": {month: {"minutes": [...], "cols": [[] ...], "loads": [...]}}}
+    返回 {"feeders": [...], "months": {month: {"minutes": [...], "cols": [[] ...], "loads": [...], "weekend": [...]}}}
     """
     feeders = []
     months = {}
@@ -103,9 +111,10 @@ def read_interval(path):
             stamp = datetime.strptime(row["ts"], "%Y-%m-%dT%H:%M")
             key = stamp.strftime("%Y-%m")
             bucket = months.setdefault(
-                key, {"minutes": [], "cols": [[] for _ in feeders], "loads": []}
+                key, {"minutes": [], "cols": [[] for _ in feeders], "loads": [], "weekend": []}
             )
             bucket["minutes"].append(stamp.hour * 60 + stamp.minute)
+            bucket["weekend"].append(stamp.weekday() >= 5)
             total = 0.0
             for index, name in enumerate(feeders):
                 value = float(row[name])

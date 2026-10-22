@@ -18,6 +18,7 @@ import signal
 import subprocess
 import tempfile
 from calendar import monthrange
+from datetime import date
 from pathlib import Path
 
 ENTRY = "/app/report.py"
@@ -98,7 +99,9 @@ def r2(value):
     return float(Decimal(repr(float(value))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
-def period_of(minute, bounds):
+def period_of(minute, bounds, flat=False):
+    if flat:
+        return "flat"
     index = 0
     for bound in bounds:
         if minute >= bound:
@@ -106,10 +109,20 @@ def period_of(minute, bounds):
     return SHAPE[index]
 
 
-def period_energy(minutes, loads, bounds):
+def weekend_flags(year, month):
+    """与 interval.csv 对齐：每天 96 个区间，周六周日为真。"""
+    flags = []
+    for day in range(1, monthrange(year, month)[1] + 1):
+        flag = date(year, month, day).weekday() >= 5
+        flags.extend([flag] * 96)
+    return flags
+
+
+def period_energy(minutes, loads, bounds, weekend=None, weekend_flat=False):
     total = {name: 0.0 for name in PERIODS}
-    for minute, kw in zip(minutes, loads):
-        total[period_of(minute, bounds)] += kw * STEP_H
+    for index, (minute, kw) in enumerate(zip(minutes, loads)):
+        flat = bool(weekend_flat and weekend is not None and weekend[index])
+        total[period_of(minute, bounds, flat)] += kw * STEP_H
     return total
 
 
@@ -123,8 +136,9 @@ def basic(contract, demand, rate, floor):
     return r2(billed * rate + 2.0 * rate * over), billed
 
 
-def bill_of(month, minutes, loads, cols, bounds, rates, contract, rate, floor):
-    energy = period_energy(minutes, loads, bounds)
+def bill_of(month, minutes, loads, cols, bounds, rates, contract, rate, floor,
+            weekend=None, weekend_flat=False):
+    energy = period_energy(minutes, loads, bounds, weekend, weekend_flat)
     energy_charge = r2(sum(r2(energy[name] * rates[name]) for name in PERIODS))
     demand = measured(cols)
     charge, billed = basic(contract, demand, rate, floor)
@@ -227,7 +241,7 @@ def random_tariff(seed):
     return bounds, rates, rate
 
 
-def build_audit(name, seed, base, two_feeders, capacity, declared, change_month):
+def build_audit(name, seed, base, two_feeders, capacity, declared, change_month, weekend_flat=False):
     bounds, rates, rate = random_tariff(seed)
     floor = 0.4 * capacity
     contracts = {}
@@ -245,7 +259,9 @@ def build_audit(name, seed, base, two_feeders, capacity, declared, change_month)
         key = f"2025-{month:02d}"
         minutes, cols = truth[key]
         loads = [sum(values) for values in zip(*cols)]
-        bill = bill_of(key, minutes, loads, cols, bounds, rates, contracts[month], rate, floor)
+        flags = weekend_flags(2025, month)
+        bill = bill_of(key, minutes, loads, cols, bounds, rates, contracts[month], rate, floor,
+                       flags, weekend_flat)
         bills.append(bill)
     payload = []
     for bill in bills:
@@ -293,6 +309,7 @@ def build_audit(name, seed, base, two_feeders, capacity, declared, change_month)
         "rate": rate,
         "floor": floor,
         "contracts": contracts,
+        "weekend_flat": weekend_flat,
         "bills": bills,
         "months": [f"2025-{month:02d}" for month in range(1, 13)],
         "data": truth,
@@ -368,8 +385,8 @@ def build_plan(name, seed, base, declared, capacity):
 def load_cases():
     if _CASES:
         return
-    build_audit("multi-run", 101, 0.82, True, 1250.0, (650.0, 700.0), 6)
-    build_audit("floor-run", 102, 0.92, True, 1800.0, (380.0, 380.0), 13)
+    build_audit("multi-run", 101, 0.82, True, 1250.0, (650.0, 700.0), 6, weekend_flat=True)
+    build_audit("floor-run", 102, 0.92, True, 1800.0, (380.0, 380.0), 13, weekend_flat=False)
     build_plan("plan-base", 201, 500.0, 700.0, 1250.0)
     build_plan("plan-tight", 202, 600.0, 430.0, 1250.0)
 
@@ -607,7 +624,9 @@ def test_period_energy_matches_reported_boundaries():
     for index, month in enumerate(case["months"]):
         minutes, cols = case["data"][month]
         loads = [sum(values) for values in zip(*cols)]
-        want = period_energy(minutes, loads, bounds)
+        want = period_energy(
+            minutes, loads, bounds, weekend_flags(2025, index + 1), case["weekend_flat"]
+        )
         got = data["bills"][index]["energy_kwh"]
         for name in PERIODS:
             gaps.append((month, name, got[name] - want[name]))

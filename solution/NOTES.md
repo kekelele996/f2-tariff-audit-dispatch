@@ -5,14 +5,14 @@
 | 编号 | 难点 | 原写法 | 参考解 | 计分测试 |
 |---|---|---|---|---|
 | difficulty_1 | 最大需量的进线口径与核定需量反解 | 把同一时刻各进线相加后取最大；核定需量直接取实测需量 | 各进线分别取本线最大再累加；由每月基本电费反解核定需量（含 105% 分档、40% 保底、年内按月变更） | `test_measured_demand_uses_feeder_maxima`、`test_contract_demand_recovers_midyear_change`、`test_floor_contract_on_low_load_site` |
-| difficulty_2 | 分时时段反演 | 沿用价格表里的上一版时段 | 用 12 个月的分时电量反推四个边界（15 分钟网格） | `test_boundaries_recovered_for_two_feeder_site`、`test_boundaries_recovered_for_floor_site`、`test_period_energy_matches_reported_boundaries` |
+| difficulty_2 | 分时时段反演 | 沿用价格表里的上一版时段 | 用 12 个月的分时电量反推四个边界（15 分钟网格），同时判定该站周末是否整段按平段结算 | `test_boundaries_recovered_for_two_feeder_site`、`test_boundaries_recovered_for_floor_site`、`test_period_energy_matches_reported_boundaries` |
 | difficulty_3 | 储能月度计划 | 低谷充满、按 90 分位削峰；节省按理想价差估 | 对需量上限枚举 + 动态规划，目标含电度电费与基本电费 | `test_schedule_is_feasible`、`test_schedule_reaches_optimum_on_base_site`、`test_schedule_reaches_optimum_with_tight_contract` |
 
 三个难点各自独立：留一法实测 rewards 为 0.600 / 0.700 / 0.700，全部退回为 0.000。
 
 ## 账单口径
 
-- 分时电量：每个 15 分钟区间的电量 `kW × 0.25` 按区间起点归入时段。
+- 分时电量：每个 15 分钟区间的电量 `kW × 0.25` 按区间起点归入时段；该站若周末整段按平段结算，周末区间全部计入平段。
 - 基本电费：计费需量 `billed = max(核定需量, 0.4 × 变压器容量)`；实测需量超过 `1.05 × billed`
   的部分按两倍单价计收，即 `billed × 单价 + 2 × 单价 × max(0, 实测 − 1.05 × billed)`。
   依据：《关于完善两部制电价用户基本电价执行方式的通知》（发改办价格〔2016〕1583 号）第二条。
@@ -21,7 +21,7 @@
 
 ## 反演方法
 
-1. 时段：每月按一天 96 个槽位汇总电量并取前缀和；枚举 `(b1,b2,b3)` 用高峰与尖峰电量剪枝，
+1. 时段：每月按一天 96 个槽位汇总电量并取前缀和（周末单独再汇总一份）；先按“周末照常分时”枚举 `(b1,b2,b3)` 用高峰与尖峰电量剪枝，
    再枚举 `b0` 用低谷与平段校验。唯一解才接受。
 2. 需量口径：`feeder_sum` 与 `simultaneous` 两种口径分别做核定需量拟合，只有一种能复现全部 12 个月的基本电费。
 3. 核定需量：单月由 `charge = billed × 单价` 或 `charge = 2 × 单价 × 实测 − 1.1 × 单价 × billed`
@@ -40,6 +40,12 @@
 - 需量 0.02 / 0.05 kW：实测需量保留两位小数；核定需量由金额反解，`0.01 / 单价` 量级。
 - 计划电费 1%：参考解与测试侧动态规划的需量上限网格不同，两边差在 0.1% 以内；
   测试侧用 1% 留出网格差异，同时把“按 90 分位削峰”的写法挡在外面（实测差 3% 以上）。
+
+## 两天制
+
+周末整段按平段结算的站点，平段电量里包含全部周末电量，其余三个时段只由工作日贡献。
+反演时两种口径各拟合一遍：照常分时的口径若能复现全部 12 个月就取它，否则取周末平段口径；
+两种都成立或都不成立直接报错。示例站 park-a 与隐藏用例 multi-run 是周末平段，floor-run 照常分时。
 
 ## 权重
 

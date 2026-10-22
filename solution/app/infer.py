@@ -18,9 +18,11 @@ def parse_bounds(texts):
     return tuple(billing.parse_bound(text) for text in texts)
 
 
-def _slot_prefix(minutes, loads):
+def _slot_prefix(minutes, loads, weekend=None, only_weekend=False):
     slots = [0.0] * 96
-    for minute, kw in zip(minutes, loads):
+    for index, (minute, kw) in enumerate(zip(minutes, loads)):
+        if only_weekend and not (weekend is not None and weekend[index]):
+            continue
         slots[minute // 15] += kw * billing.STEP_H
     prefix = [0.0]
     for value in slots:
@@ -28,18 +30,34 @@ def _slot_prefix(minutes, loads):
     return prefix
 
 
-def _infer_bounds(months, data, bills_by_month):
-    """枚举 (b1,b2,b3,b0)，用分时电量把不可能的组合尽早剪掉。"""
-    prefixes = {
+def _search_bounds(months, data, bills_by_month, weekend_flat):
+    """给定“周末是否整段计入平段”，枚举 (b1,b2,b3,b0) 并用分时电量剪枝。"""
+    allp = {
         month: _slot_prefix(data["months"][month]["minutes"], data["months"][month]["loads"])
+        for month in months
+    }
+    weekp = {
+        month: _slot_prefix(
+            data["months"][month]["minutes"],
+            data["months"][month]["loads"],
+            data["months"][month].get("weekend"),
+            only_weekend=True,
+        )
         for month in months
     }
 
     def between(month, start, end):
-        return prefixes[month][end] - prefixes[month][start]
+        total = allp[month][end] - allp[month][start]
+        if weekend_flat:
+            total -= weekp[month][end] - weekp[month][start]
+        return total
+
+    def weekend_total(month):
+        return weekp[month][96] if weekend_flat else 0.0
 
     def close(month, start, end, name):
-        return abs(between(month, start, end) - bills_by_month[month]["energy_kwh"][name]) <= TOL_KWH
+        want = bills_by_month[month]["energy_kwh"][name]
+        return abs(between(month, start, end) - want) <= TOL_KWH
 
     found = []
     for b1 in range(2, 94):
@@ -54,7 +72,9 @@ def _infer_bounds(months, data, bills_by_month):
                         continue
                     ok = all(
                         abs(
-                            between(month, b0, b1) + between(month, b3, 96)
+                            between(month, b0, b1)
+                            + between(month, b3, 96)
+                            + weekend_total(month)
                             - bills_by_month[month]["energy_kwh"]["flat"]
                         )
                         <= TOL_KWH
@@ -62,9 +82,16 @@ def _infer_bounds(months, data, bills_by_month):
                     )
                     if ok:
                         found.append((b0 * 15, b1 * 15, b2 * 15, b3 * 15))
-    if len(found) != 1:
-        raise ValueError(f"时段反演得到 {len(found)} 个解，需要恰好一个")
-    return found[0]
+    return found
+
+
+def _infer_bounds(months, data, bills_by_month):
+    """先试“周末照常分时”，再试“周末整段平段”，只有恰好一组解才算数。"""
+    for weekend_flat in (False, True):
+        found = _search_bounds(months, data, bills_by_month, weekend_flat)
+        if len(found) == 1:
+            return found[0], weekend_flat
+    raise ValueError("时段反演没有唯一解：两天制与周末平段都不成立")
 
 
 def _month_contract_candidates(charge, measured, rate, floor_kw):
@@ -149,7 +176,7 @@ def infer_tariff(case_dir, data, bills, price_list, site):
     rate = price_list["demand_rate"]
     floor_kw = 0.4 * site["transformers_kva"]
 
-    bounds = _infer_bounds(months, data, bills_by_month)  # htbfix:bounds
+    bounds, weekend_flat = _infer_bounds(months, data, bills_by_month)  # htbfix:bounds
     demand_mode = _infer_mode(months, data, bills_by_month, rate, floor_kw)  # htbfix:mode
 
     measured = {
@@ -165,5 +192,6 @@ def infer_tariff(case_dir, data, bills, price_list, site):
         "rates": dict(price_list["energy_rates"]),
         "demand_rate": rate,
         "floor_kw": floor_kw,
+        "weekend_flat": weekend_flat,
         "contracts": contracts,
     }

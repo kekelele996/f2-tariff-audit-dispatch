@@ -41,7 +41,9 @@ def audit_report(case, case_dir, data):
         one = dict(tariff)
         one["contract_kw"] = tariff["contracts"][month]
         bills_out.append(
-            billing.month_bill(month, bucket["minutes"], bucket["loads"], bucket["cols"], one)
+            billing.month_bill(
+                month, bucket["minutes"], bucket["loads"], bucket["cols"], one, bucket.get("weekend")
+            )
         )
     return {
         "case_id": case["case_id"],
@@ -67,7 +69,7 @@ def plan_report(case, case_dir, data):
         "contract_kw": max(contract["declared_demand_kw"], floor_kw),
     }
     baseline = billing.month_bill(
-        month, bucket["minutes"], bucket["loads"], bucket["cols"], tariff
+        month, bucket["minutes"], bucket["loads"], bucket["cols"], tariff, bucket.get("weekend")
     )
     schedule, optimized, saving = dispatch.optimize(
         month, bucket["minutes"], bucket["loads"], bucket["cols"], tariff, battery, baseline["total"]
