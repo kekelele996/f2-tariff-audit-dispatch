@@ -3,7 +3,8 @@
   "gate_tests": [
     "test_outputs.py::test_entry_writes_report_for_audit_case",
     "test_outputs.py::test_missing_out_argument_exits_nonzero",
-    "test_outputs.py::test_unknown_case_directory_exits_nonzero"
+    "test_outputs.py::test_unknown_case_directory_exits_nonzero",
+    "test_outputs.py::test_repeat_run_is_identical"
   ],
   "tests": {
     "test_outputs.py::test_measured_demand_uses_feeder_maxima": {"weight": 0.14, "rationale": "难点1 需量口径：实测需量是基本电费与核定需量的输入，错了后面全错，难点合计 0.40"},

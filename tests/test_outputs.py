@@ -497,7 +497,7 @@ def plan_bill(name, schedule):
 # ---------------- gate：入口与契约 ----------------
 
 def test_entry_writes_report_for_audit_case():
-    """「python3 /app/report.py <case_dir> --out <json_path>」"""
+    """「python3 /app/report.py <case_dir> --out <json_path>」「输出一个 JSON 对象」"""
     load_cases()
     data = report_of("multi-run")
     assert data["kind"] == "audit"
@@ -522,6 +522,20 @@ def test_unknown_case_directory_exits_nonzero():
     proc = run_candidate(missing, "--out", out_dir / "report.json")
     assert proc.returncode == 2
     assert not (out_dir / "report.json").exists()
+
+
+def test_repeat_run_is_identical():
+    """「同一份输入重复运行，结果要一致」「只用容器里已有的 Python 标准库，不联网」"""
+    load_cases()
+    first = report_of("multi-run")
+    second_dir = work_root() / "out-repeat"
+    second_dir.mkdir(exist_ok=True)
+    second_dir.chmod(0o777)
+    second_path = second_dir / "report.json"
+    proc = run_candidate(_CASES["multi-run"]["dir"], "--out", second_path)
+    assert proc.returncode == 0
+    second = json.loads(second_path.read_text(encoding="utf-8"))
+    assert second == first
 
 
 # ---------------- 难点 1：需量口径与核定需量 ----------------
