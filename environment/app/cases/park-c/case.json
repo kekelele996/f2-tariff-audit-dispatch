@@ -1,0 +1,12 @@
+{
+ "case_id": "park-c",
+ "kind": "plan",
+ "site": {
+  "name": "园区 C 站",
+  "transformers_kva": 1250.0,
+  "feeders": [
+   "feeder_a"
+  ]
+ },
+ "plan_month": "2025-07"
+}

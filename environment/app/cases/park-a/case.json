@@ -1,0 +1,12 @@
+{
+ "case_id": "park-a",
+ "kind": "audit",
+ "site": {
+  "name": "园区 A 站",
+  "transformers_kva": 1250.0,
+  "feeders": [
+   "feeder_a",
+   "feeder_b"
+  ]
+ }
+}

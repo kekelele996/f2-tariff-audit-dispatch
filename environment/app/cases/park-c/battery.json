@@ -1,0 +1,10 @@
+{
+ "capacity_kwh": 400.0,
+ "max_charge_kw": 100.0,
+ "max_discharge_kw": 100.0,
+ "charge_efficiency": 0.8,
+ "discharge_efficiency": 1.0,
+ "soc_min_kwh": 40.0,
+ "soc_max_kwh": 360.0,
+ "soc_initial_kwh": 120.0
+}

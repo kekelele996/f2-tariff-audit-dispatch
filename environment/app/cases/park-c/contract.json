@@ -1,0 +1,17 @@
+{
+ "declared_demand_kw": 700.0,
+ "demand_rate": 42.27,
+ "demand_window_min": 15,
+ "boundaries": [
+  "07:00",
+  "09:45",
+  "14:00",
+  "18:15"
+ ],
+ "rates": {
+  "valley": 0.2135,
+  "flat": 0.4615,
+  "peak": 0.857,
+  "sharp": 0.9921
+ }
+}

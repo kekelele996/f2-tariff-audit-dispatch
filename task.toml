@@ -3,8 +3,8 @@ artifacts = []
 
 [task]
 name = "local/f2-tariff-audit-dispatch"
-description = "园区电费结算口径反演与储能月度测算"
-keywords = ["f.2", "energy systems", "f2-tariff-audit-dispatch"]
+description = "从历史电费单反推结算口径，并给出储能月度最优充放电计划"
+keywords = ["electricity tariff", "demand charge", "battery dispatch", "parameter inference"]
 [[task.authors]]
 name = "高博"
 
@@ -13,7 +13,7 @@ author_name = "高博"
 author_email = "unknown"
 difficulty = "hard"
 category = "energy-systems"
-tags = ["energy systems", "f2-tariff-audit-dispatch"]
+tags = ["energy", "optimization", "inference"]
 # 审核器按字符串解析（"4h"、"90m"）；裸数字会被当成小时。_min 版本给平台表格用。
 expert_time_estimate = "4h"
 expert_time_estimate_min = 240

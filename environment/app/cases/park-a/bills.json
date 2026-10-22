@@ -1,0 +1,146 @@
+[
+ {
+  "month": "2025-01",
+  "energy_kwh": {
+   "valley": 53642.4,
+   "flat": 67973.1,
+   "peak": 50427.5,
+   "sharp": 46763.0
+  },
+  "energy_charge": 131701.32,
+  "basic_charge": 28249.0,
+  "total": 159950.32
+ },
+ {
+  "month": "2025-02",
+  "energy_kwh": {
+   "valley": 49262.3,
+   "flat": 61469.6,
+   "peak": 45501.4,
+   "sharp": 42227.2
+  },
+  "energy_charge": 119116.37,
+  "basic_charge": 28249.0,
+  "total": 147365.37
+ },
+ {
+  "month": "2025-03",
+  "energy_kwh": {
+   "valley": 58006.2,
+   "flat": 69759.3,
+   "peak": 51542.2,
+   "sharp": 47973.5
+  },
+  "energy_charge": 135598.36,
+  "basic_charge": 28249.0,
+  "total": 163847.36
+ },
+ {
+  "month": "2025-04",
+  "energy_kwh": {
+   "valley": 62687.4,
+   "flat": 74326.1,
+   "peak": 54355.7,
+   "sharp": 51348.6
+  },
+  "energy_charge": 144443.55,
+  "basic_charge": 32758.24,
+  "total": 177201.79
+ },
+ {
+  "month": "2025-05",
+  "energy_kwh": {
+   "valley": 69868.5,
+   "flat": 80510.2,
+   "peak": 58302.5,
+   "sharp": 55414.4
+  },
+  "energy_charge": 156207.32,
+  "basic_charge": 29625.99,
+  "total": 185833.31
+ },
+ {
+  "month": "2025-06",
+  "energy_kwh": {
+   "valley": 71287.6,
+   "flat": 80669.9,
+   "peak": 58252.1,
+   "sharp": 55612.2
+  },
+  "energy_charge": 156741.43,
+  "basic_charge": 30422.0,
+  "total": 187163.43
+ },
+ {
+  "month": "2025-07",
+  "energy_kwh": {
+   "valley": 76391.6,
+   "flat": 86591.7,
+   "peak": 62211.2,
+   "sharp": 59894.6
+  },
+  "energy_charge": 168163.81,
+  "basic_charge": 32326.24,
+  "total": 200490.05
+ },
+ {
+  "month": "2025-08",
+  "energy_kwh": {
+   "valley": 73406.3,
+   "flat": 82480.0,
+   "peak": 59370.3,
+   "sharp": 56761.8
+  },
+  "energy_charge": 160118.03,
+  "basic_charge": 37017.06,
+  "total": 197135.09
+ },
+ {
+  "month": "2025-09",
+  "energy_kwh": {
+   "valley": 68232.7,
+   "flat": 78824.5,
+   "peak": 57059.5,
+   "sharp": 54428.0
+  },
+  "energy_charge": 153055.3,
+  "basic_charge": 31274.51,
+  "total": 184329.81
+ },
+ {
+  "month": "2025-10",
+  "energy_kwh": {
+   "valley": 64848.5,
+   "flat": 77274.5,
+   "peak": 56308.2,
+   "sharp": 53231.2
+  },
+  "energy_charge": 149787.01,
+  "basic_charge": 34987.21,
+  "total": 184774.22
+ },
+ {
+  "month": "2025-11",
+  "energy_kwh": {
+   "valley": 55872.6,
+   "flat": 67074.7,
+   "peak": 49503.1,
+   "sharp": 46052.6
+  },
+  "energy_charge": 130281.7,
+  "basic_charge": 30422.0,
+  "total": 160703.7
+ },
+ {
+  "month": "2025-12",
+  "energy_kwh": {
+   "valley": 55001.2,
+   "flat": 69232.6,
+   "peak": 51216.0,
+   "sharp": 47501.2
+  },
+  "energy_charge": 133973.57,
+  "basic_charge": 30422.0,
+  "total": 164395.57
+ }
+]

@@ -1,0 +1,23 @@
+{
+ "effective": "2025-01-01",
+ "energy_rates": {
+  "valley": 0.2112,
+  "flat": 0.4887,
+  "peak": 0.8056,
+  "sharp": 0.995
+ },
+ "demand_rate": 43.46,
+ "default_boundaries": [
+  "08:00",
+  "11:00",
+  "15:00",
+  "20:00"
+ ],
+ "period_shape": [
+  "valley",
+  "flat",
+  "peak",
+  "sharp",
+  "flat"
+ ]
+}
