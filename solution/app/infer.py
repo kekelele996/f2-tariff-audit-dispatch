@@ -118,8 +118,24 @@ def _intersect(sets):
     return common
 
 
+def _segments(per_month, cuts):
+    """按切割点把月份序列切成若干段，返回每段的候选交集。"""
+    pieces = []
+    start = 0
+    for cut in list(cuts) + [len(per_month)]:
+        common = _intersect(per_month[start:cut])
+        if not common:
+            return None
+        pieces.append(common)
+        start = cut
+    return pieces
+
+
 def _fit_contracts(months, bills_by_month, measured, rate, floor_kw):
-    """按抄表月切至多两段，每段的候选交集就是该段的核定需量。"""
+    """按抄表月切至多三段，每段的候选交集就是该段的核定需量。
+
+    优先段数少、候选值唯一的分法；三段以内都试过仍无解则返回 None。
+    """
     per_month = []
     for month in months:
         per_month.append(
@@ -130,26 +146,41 @@ def _fit_contracts(months, bills_by_month, measured, rate, floor_kw):
     if any(not item for item in per_month):
         return None
 
+    count = len(months)
     best = None
-    for cut in range(1, len(months) + 1):
-        left = _intersect(per_month[:cut])
-        right = _intersect(per_month[cut:]) if cut < len(months) else set()
-        if not left or (cut < len(months) and not right):
-            continue
-        size = len(left) + (len(right) if cut < len(months) else 0)
-        if best is None or size < best[0]:
-            best = (size, cut, left, right)
+    for cut_count, limit in ((1, 1), (2, 2)):
+        if cut_count == 1:
+            cut_sets = [(cut,) for cut in range(1, count + 1)]
+        else:
+            cut_sets = [
+                (first, second)
+                for first in range(1, count)
+                for second in range(first + 1, count + 1)
+            ]
+        for cuts in cut_sets:
+            pieces = _segments(per_month, cuts)
+            if pieces is None:
+                continue
+            if any(len(piece) > 1 for piece in pieces):
+                continue
+            size = sum(len(piece) for piece in pieces)
+            key = (size, len(cuts))
+            if best is None or key < best[0]:
+                best = (key, cuts, pieces)
+        if best is not None:
+            break
     if best is None:
         return None
 
-    _, cut, left, right = best
-    if len(left) > 1 or len(right) > 1:
-        return None
-    left_value = sorted(left)[0]
-    right_value = sorted(right)[0] if cut < len(months) else None
+    _, cuts, pieces = best
     contracts = {}
-    for index, month in enumerate(months):
-        contracts[month] = left_value if index < cut else right_value
+    index = 0
+    bounds = list(cuts) + [count]
+    for piece, stop in zip(pieces, bounds):
+        value = sorted(piece)[0]
+        for month in months[index:stop]:
+            contracts[month] = value
+        index = stop
     return contracts
 
 

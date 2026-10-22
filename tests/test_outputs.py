@@ -241,12 +241,16 @@ def random_tariff(seed):
     return bounds, rates, rate
 
 
-def build_audit(name, seed, base, two_feeders, capacity, declared, change_month, weekend_flat=False):
+def build_audit(name, seed, base, two_feeders, capacity, declared, change_month, weekend_flat=False, third=None):
     bounds, rates, rate = random_tariff(seed)
     floor = 0.4 * capacity
     contracts = {}
     for month in range(1, 13):
         contracts[month] = declared[0] if month < change_month else declared[1]
+    if third is not None:
+        start, value = third
+        for month in range(start, 13):
+            contracts[month] = value
     spec = {
         "year": 2025,
         "months": list(range(1, 13)),
@@ -385,10 +389,10 @@ def build_plan(name, seed, base, declared, capacity):
 def load_cases():
     if _CASES:
         return
-    build_audit("multi-run", 101, 0.82, True, 1250.0, (650.0, 700.0), 6, weekend_flat=True)
+    build_audit("multi-run", 101, 0.82, True, 1250.0, (650.0, 700.0), 6, weekend_flat=True, third=(10, 720.0))
     build_audit("floor-run", 102, 0.92, True, 1800.0, (380.0, 380.0), 13, weekend_flat=False)
     build_plan("plan-base", 201, 500.0, 700.0, 1250.0)
-    build_plan("plan-tight", 202, 600.0, 430.0, 1250.0)
+    build_plan("plan-tight", 202, 600.0, 380.0, 1250.0)
 
 
 # ---------------- 独立最优调度 ----------------
@@ -660,7 +664,7 @@ def test_schedule_reaches_optimum_on_base_site():
     actual = plan_bill("plan-base", schedule)
     assert abs(data["plan"]["baseline_bill"] - expect["baseline"]) <= 0.05
     assert abs(data["plan"]["optimized_bill"] - actual) <= 0.05
-    assert actual <= expect["total"] * 1.01, f"{actual} > {expect['total']}"
+    assert actual <= expect["total"] * 1.003, f"{actual} > {expect['total']}"
 
 
 def test_schedule_reaches_optimum_with_tight_contract():
@@ -674,4 +678,4 @@ def test_schedule_reaches_optimum_with_tight_contract():
     expect = plan_expectation("plan-tight")
     actual = plan_bill("plan-tight", schedule)
     assert abs(data["plan"]["optimized_bill"] - actual) <= 0.05
-    assert actual <= expect["total"] * 1.01, f"{actual} > {expect['total']}"
+    assert actual <= expect["total"] * 1.003, f"{actual} > {expect['total']}"
