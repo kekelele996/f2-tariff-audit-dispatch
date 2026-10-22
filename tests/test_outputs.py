@@ -510,6 +510,7 @@ def test_missing_out_argument_exits_nonzero():
     load_cases()
     proc = run_candidate(_CASES["multi-run"]["dir"])
     assert proc.returncode == 2
+    assert proc.stdout.strip() == ""
 
 
 def test_unknown_case_directory_exits_nonzero():
@@ -602,18 +603,18 @@ def test_period_energy_matches_reported_boundaries():
     data = report_of("multi-run")
     case = _CASES["multi-run"]
     bounds = tuple(int(text[:2]) * 60 + int(text[3:]) for text in data["tariff"]["boundaries"])
-    worst = 0.0
+    gaps = []
     for index, month in enumerate(case["months"]):
         minutes, cols = case["data"][month]
         loads = [sum(values) for values in zip(*cols)]
         want = period_energy(minutes, loads, bounds)
         got = data["bills"][index]["energy_kwh"]
         for name in PERIODS:
-            worst = max(worst, abs(got[name] - want[name]))
-            assert abs(got[name] - case["bills"][index]["energy_kwh"][name]) <= 0.25, (
-                f"{month} {name} 与账单差 {got[name] - case['bills'][index]['energy_kwh'][name]:.1f}"
-            )
-    assert worst <= 0.25, f"分时电量最大偏差 {worst}"
+            gaps.append((month, name, got[name] - want[name]))
+            gaps.append((month, name, got[name] - case["bills"][index]["energy_kwh"][name]))
+    assert len(gaps) == 12 * len(PERIODS) * 2
+    worst = max(abs(item[2]) for item in gaps)
+    assert worst <= 0.25, f"分时电量最大偏差 {worst}：{max(gaps, key=lambda item: abs(item[2]))}"
 
 
 # ---------------- 难点 3：储能计划 ----------------
