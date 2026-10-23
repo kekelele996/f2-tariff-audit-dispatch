@@ -320,7 +320,7 @@ def build_audit(name, seed, base, two_feeders, capacity, declared, change_month,
     }
 
 
-def build_plan(name, seed, base, declared, capacity):
+def build_plan(name, seed, base, declared, capacity, battery_override=None):
     bounds, rates, rate = random_tariff(seed)
     month = 7
     spec = {
@@ -341,6 +341,8 @@ def build_plan(name, seed, base, declared, capacity):
         "soc_max_kwh": 360.0,
         "soc_initial_kwh": 120.0,
     }
+    if battery_override:
+        battery.update(battery_override)
     (folder / "battery.json").write_text(json.dumps(battery, indent=1), encoding="utf-8")
     (folder / "contract.json").write_text(
         json.dumps(
@@ -393,6 +395,18 @@ def load_cases():
     build_audit("floor-run", 102, 0.92, True, 1800.0, (380.0, 380.0), 13, weekend_flat=False)
     build_plan("plan-base", 201, 500.0, 700.0, 1250.0)
     build_plan("plan-tight", 202, 600.0, 380.0, 1250.0)
+    build_plan(
+        "plan-edge", 203, 560.0, 405.0, 1250.0,
+        battery_override={
+            "capacity_kwh": 320.0,
+            "max_charge_kw": 80.0,
+            "max_discharge_kw": 80.0,
+            "charge_efficiency": 0.65,
+            "soc_min_kwh": 30.0,
+            "soc_max_kwh": 290.0,
+            "soc_initial_kwh": 100.0,
+        },
+    )
 
 
 # ---------------- 独立最优调度 ----------------
@@ -677,5 +691,19 @@ def test_schedule_reaches_optimum_with_tight_contract():
     assert ok, reason
     expect = plan_expectation("plan-tight")
     actual = plan_bill("plan-tight", schedule)
+    assert abs(data["plan"]["optimized_bill"] - actual) <= 0.05
+    assert actual <= expect["total"] * 1.003, f"{actual} > {expect['total']}"
+
+
+def test_schedule_reaches_optimum_with_small_battery():
+    """「计划对应的月电费按结算口径重算，不是估算」"""
+    load_cases()
+    data = report_of("plan-edge")
+    case = _CASES["plan-edge"]
+    schedule = data["plan"]["schedule_kw"]
+    ok, reason = feasible(schedule, case["battery"], len(case["loads"]))
+    assert ok, reason
+    expect = plan_expectation("plan-edge")
+    actual = plan_bill("plan-edge", schedule)
     assert abs(data["plan"]["optimized_bill"] - actual) <= 0.05
     assert actual <= expect["total"] * 1.003, f"{actual} > {expect['total']}"

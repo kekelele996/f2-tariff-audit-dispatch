@@ -1,20 +1,51 @@
 {
-  "schema_version": 1,
-  "gate_tests": [
-    "test_outputs.py::test_entry_writes_report_for_audit_case",
-    "test_outputs.py::test_missing_out_argument_exits_nonzero",
-    "test_outputs.py::test_unknown_case_directory_exits_nonzero",
-    "test_outputs.py::test_repeat_run_is_identical"
-  ],
-  "tests": {
-    "test_outputs.py::test_measured_demand_uses_feeder_maxima": {"weight": 0.14, "rationale": "难点1 需量口径：实测需量是基本电费与核定需量的输入，错了后面全错，难点合计 0.40"},
-    "test_outputs.py::test_contract_demand_recovers_midyear_change": {"weight": 0.13, "rationale": "难点1：核定需量年内变更后的反解"},
-    "test_outputs.py::test_floor_contract_on_low_load_site": {"weight": 0.13, "rationale": "难点1：保底需量站点的实测需量与基本电费"},
-    "test_outputs.py::test_boundaries_recovered_for_two_feeder_site": {"weight": 0.10, "rationale": "难点2 时段反演：双进线站点的四个边界，难点合计 0.30"},
-    "test_outputs.py::test_boundaries_recovered_for_floor_site": {"weight": 0.10, "rationale": "难点2：换一个负荷水平仍要反演出边界"},
-    "test_outputs.py::test_period_energy_matches_reported_boundaries": {"weight": 0.10, "rationale": "难点2：按报出的边界复算分时电量并与账单对齐"},
-    "test_outputs.py::test_schedule_is_feasible": {"weight": 0.10, "rationale": "难点3 储能计划：荷电状态、功率与期末约束，难点合计 0.30"},
-    "test_outputs.py::test_schedule_reaches_optimum_on_base_site": {"weight": 0.10, "rationale": "难点3：常规站点上计划电费不超过最优值 1%"},
-    "test_outputs.py::test_schedule_reaches_optimum_with_tight_contract": {"weight": 0.10, "rationale": "难点3：核定需量很低的站点，充电会顶高月需量"}
+ "schema_version": 1,
+ "gate_tests": [
+  "test_outputs.py::test_entry_writes_report_for_audit_case",
+  "test_outputs.py::test_missing_out_argument_exits_nonzero",
+  "test_outputs.py::test_unknown_case_directory_exits_nonzero",
+  "test_outputs.py::test_repeat_run_is_identical"
+ ],
+ "tests": {
+  "test_outputs.py::test_measured_demand_uses_feeder_maxima": {
+   "weight": 0.14,
+   "rationale": "难点1 需量口径：实测需量是基本电费与核定需量的输入，错了后面全错，难点合计 0.40"
+  },
+  "test_outputs.py::test_contract_demand_recovers_midyear_change": {
+   "weight": 0.13,
+   "rationale": "难点1：核定需量年内变更后的反解"
+  },
+  "test_outputs.py::test_floor_contract_on_low_load_site": {
+   "weight": 0.13,
+   "rationale": "难点1：保底需量站点的实测需量与基本电费"
+  },
+  "test_outputs.py::test_boundaries_recovered_for_two_feeder_site": {
+   "weight": 0.1,
+   "rationale": "难点2 时段反演：双进线站点的四个边界，难点合计 0.30"
+  },
+  "test_outputs.py::test_boundaries_recovered_for_floor_site": {
+   "weight": 0.1,
+   "rationale": "难点2：换一个负荷水平仍要反演出边界"
+  },
+  "test_outputs.py::test_period_energy_matches_reported_boundaries": {
+   "weight": 0.1,
+   "rationale": "难点2：按报出的边界复算分时电量并与账单对齐"
+  },
+  "test_outputs.py::test_schedule_is_feasible": {
+   "weight": 0.075,
+   "rationale": "难点3 储能计划：荷电状态、功率与期末约束，难点合计 0.30"
+  },
+  "test_outputs.py::test_schedule_reaches_optimum_on_base_site": {
+   "weight": 0.075,
+   "rationale": "难点3：常规站点上计划电费不超过最优值 1%"
+  },
+  "test_outputs.py::test_schedule_reaches_optimum_with_tight_contract": {
+   "weight": 0.075,
+   "rationale": "难点3：核定需量很低的站点，充电会顶高月需量"
+  },
+  "test_outputs.py::test_schedule_reaches_optimum_with_small_battery": {
+   "weight": 0.075,
+   "rationale": "难点3：小电池 + 低充电效率 + 核定需量低于保底，削峰与套利要一起权衡"
   }
+ }
 }
