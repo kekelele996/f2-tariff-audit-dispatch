@@ -47,5 +47,6 @@
    "weight": 0.075,
    "rationale": "难点3：小电池 + 低充电效率 + 核定需量低于保底，削峰与套利要一起权衡"
   }
- }
+ },
+ "weight_policy": "business_priority"
 }
